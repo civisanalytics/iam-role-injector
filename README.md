@@ -8,7 +8,7 @@ command line tools to assume a role.
 
 ## Command Line Usage
 ```
-source assume_role.sh {accountNumber} {rolename} {username}
+source assume_role.sh {accountNumber} {mfaAccountNumber} {rolename} {username}
 ```
 
 Calling the script with 'source' is required for the
