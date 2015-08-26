@@ -16,12 +16,13 @@ command line tools to assume a role.
  - At least two AWS Accounts:
    - AWS Account 1 must have a policy that includes sts:AssumeRole to AWS Account 2
    - AWS Account 2 must have a Trust Relationship on a role that references AWS Account 1
- - AWS Account 1 may now assume the the role in AWS Account 2 that has the Trust Relationship
+ - AWS Account 1 may now assume the role in AWS Account 2 that has the Trust Relationship
 
-### Scenario Two: Single AWS Account:
- - An IAM User Account with a policy that include sts:Assume on a IAM
+### Scenario Two: Single AWS Account
+ - An IAM User Account with a policy that include sts:Assume on an IAM
    Role.
- - The IAM Role has a policy that allows the IAM User to assume it
+ - The IAM Role has a trust relationship that allows entities in the
+   account to assume it
  - In this case, AWS Account 1 and AWS Account 2 are the same.
 
 ## Installation
