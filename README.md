@@ -11,6 +11,7 @@ command line tools to assume a role.
    'aws_secret_access_key' in either environment variables -OR- in
    ~/.aws/credentials
  - One of the following Scenarios apply:
+
 ### Scenario One: Federated AWS Accounts
  - At least two AWS Accounts:
    - AWS Account 1 must have a policy that includes sts:AssumeRole to AWS Account 2
