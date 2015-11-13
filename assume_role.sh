@@ -1,12 +1,13 @@
 # USAGE:
 # requires 4 args, needs to be run with source to get exported variables to stick
-# source assume_role.sh {accountNumber} {mfaAccountNumber} {rolename} {username}
-accountNumber=$1
-mfaAccountNumber=$2
-role=$3
-username=$4
+# source assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumber} {rolename}
 
-if [ -n "$accountNumber" ] && [ -n "$mfaAccountNumber" ] && [ -n "$role" ] && [ -n "$username" ]; then
+sourceAccountNumber=$1
+username=$2
+destinationAccountNumber=$3
+rolename=$4
+
+if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "$rolename" ] && [ -n "$username" ]; then
   echo "Enter MFA token code:"
   read tokenCode
   unset AWS_SECURITY_TOKEN
@@ -26,20 +27,18 @@ if [ -n "$accountNumber" ] && [ -n "$mfaAccountNumber" ] && [ -n "$role" ] && [ 
   fi
 
   roleArn="arn:aws:iam::"
-  roleArn+="$accountNumber"
+  roleArn+="$destinationAccountNumber"
   roleArn+=":role/"
-  roleArn+="$role"
+  roleArn+="$rolename"
 
   serialArn="arn:aws:iam::"
-  serialArn+="$mfaAccountNumber"
+  serialArn+="$sourceAccountNumber"
   serialArn+=":mfa/"
   serialArn+="$username"
 
-  # run sts command, then massage the output into a comma seperated format,
-  # delete 5th line, delete 1st line, remove whitespace & tabs, remove quotes)
   commandResult=" "
   commandResult+=$(aws sts assume-role --role-arn $roleArn \
-                  --role-session-name testsession \
+                  --role-session-name iam-role-injector \
                   --serial-number $serialArn \
                   --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
                   --token-code $tokenCode)
@@ -47,7 +46,7 @@ if [ -n "$accountNumber" ] && [ -n "$mfaAccountNumber" ] && [ -n "$role" ] && [ 
   size=${#commandResult}
   if (( $size > 5 )); then
     commandResult1=$(echo "$commandResult" | sed '5d' | sed '1d' | tr -d '\040\011\012\015' | sed 's/\"//g')
-    echo "You have assumed the $2 role successfully."
+    echo "You have assumed the $rolename role successfully."
     arg1=$(echo "$commandResult1" | cut -d "," -f1)
     export AWS_SECRET_ACCESS_KEY=$arg1
     arg2=$(echo "$commandResult1" | cut -d "," -f2)
@@ -57,5 +56,5 @@ if [ -n "$accountNumber" ] && [ -n "$mfaAccountNumber" ] && [ -n "$role" ] && [ 
   fi
 
 else
-  echo "Usage: source $0 accountNumber rolename username"
+  echo "Usage: source assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumber} {rolename}"
 fi

@@ -35,13 +35,13 @@ command line tools to assume a role.
 ## Command Line Usage
 
 ```
-source ~/assume_role.sh {destinationAccountNumber} {sourceAccountNumber} {rolename} {username}
+source ~/assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumber} {rolename}
 ```
 
- - `destinationAccountNumber`: AWS Account Number of AWS Account 2
  - `sourceAccountNumber`: AWS Account Number of AWS Account 1
- - `rolename`: the name of the role to assume in AWS Account 2 that has the Trust Relationship to AWS Account 1
  - `username`: AWS Account 1 username
+ - `destinationAccountNumber`: AWS Account Number of AWS Account 2
+ - `rolename`: the name of the role to assume in AWS Account 2 that has the Trust Relationship to AWS Account 1
 
 Calling the script with 'source' is required for the
 environment variables to persist past the runtime of the script.
