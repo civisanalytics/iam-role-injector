@@ -60,3 +60,6 @@ Open an issue or a pull request if you see how we can improve the
 script!
 
 
+## License
+
+ iam-role-injector is released under the [BSD 3-Clause License](LICENSE.txt).
