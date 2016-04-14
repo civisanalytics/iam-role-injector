@@ -50,7 +50,10 @@ if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "
     arg1=$(echo "$commandResult1" | cut -d "," -f1)
     export AWS_SECRET_ACCESS_KEY=$arg1
     arg2=$(echo "$commandResult1" | cut -d "," -f2)
+    # Set AWS_SESSION_TOKEN and AWS_SECURITY_TOKEN for backwards compatibility
+    # See: http://boto3.readthedocs.org/en/latest/guide/configuration.html
     export AWS_SECURITY_TOKEN=$arg2
+    export AWS_SESSION_TOKEN=$arg2
     arg3=$(echo "$commandResult1" | cut -d "," -f3)
     export AWS_ACCESS_KEY_ID=$arg3
   fi
