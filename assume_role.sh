@@ -11,6 +11,7 @@ if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "
   echo "Enter MFA token code:"
   read tokenCode
   unset AWS_SECURITY_TOKEN
+  unset AWS_SESSION_TOKEN
   if [ -z "$AWS_ENV_VARS" ]; then
     if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
       export AWS_ENV_VARS="True"
