@@ -38,7 +38,8 @@ if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "
   serialArn+="$username"
 
   commandResult=" "
-  commandResult+=$(aws sts assume-role --role-arn $roleArn \
+  commandResult+=$(aws sts assume-role --output json \
+                  --role-arn $roleArn \
                   --role-session-name iam-role-injector \
                   --serial-number $serialArn \
                   --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
