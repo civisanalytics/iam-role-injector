@@ -62,7 +62,7 @@ if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "
   else
     echo "Unable to assume role"
     exitCode=1
-  if
+  fi
 
   (exit $exitCode)
 
