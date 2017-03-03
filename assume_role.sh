@@ -46,6 +46,7 @@ if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "
                   --token-code $tokenCode)
 
   exitCode=$?
+
   size=${#commandResult}
   if (( $size > 5 )); then
     commandResult1=$(echo "$commandResult" | sed '5d' | sed '1d' | tr -d '\040\011\012\015' | sed 's/\"//g')
@@ -64,9 +65,11 @@ if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "
     exitCode=1
   fi
 
-  (exit $exitCode)
-
 else
   echo "Usage: source assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumber} {rolename}"
-  (exit 1)
+  exitCode=1
 fi
+
+# This runs in a subshell, so it will not exit your shell when you are sourcing,
+# but it still gives you the correct exit code if you read from $?
+(exit $exitCode)
