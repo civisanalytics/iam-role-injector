@@ -45,6 +45,8 @@ if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "
                   --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
                   --token-code $tokenCode)
 
+  exitCode=$?
+
   size=${#commandResult}
   if (( $size > 5 )); then
     commandResult1=$(echo "$commandResult" | sed '5d' | sed '1d' | tr -d '\040\011\012\015' | sed 's/\"//g')
@@ -58,8 +60,16 @@ if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "
     export AWS_SESSION_TOKEN=$arg2
     arg3=$(echo "$commandResult1" | cut -d "," -f3)
     export AWS_ACCESS_KEY_ID=$arg3
+  else
+    echo "Unable to assume role"
+    exitCode=1
   fi
 
 else
   echo "Usage: source assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumber} {rolename}"
+  exitCode=1
 fi
+
+# This runs in a subshell, so it will not exit your shell when you are sourcing,
+# but it still gives you the correct exit code if you read from $?
+(exit $exitCode)
