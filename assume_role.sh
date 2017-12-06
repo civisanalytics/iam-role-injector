@@ -38,12 +38,20 @@ if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "
   serialArn+="$username"
 
   commandResult=" "
-  commandResult+=$(aws sts assume-role --output json \
+  # allow a blank tokenCode for orgs that don't use an MFA
+  if [ -z "$tokenCode" ]; then
+    commandResult+=$(aws sts assume-role --output json \
+                  --role-arn $roleArn \
+                  --role-session-name iam-role-injector \
+                  --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]')
+  else
+    commandResult+=$(aws sts assume-role --output json \
                   --role-arn $roleArn \
                   --role-session-name iam-role-injector \
                   --serial-number $serialArn \
                   --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
                   --token-code $tokenCode)
+  fi
 
   exitCode=$?
 
