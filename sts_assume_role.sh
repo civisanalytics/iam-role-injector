@@ -32,7 +32,7 @@ assume_role(){
 
     roleCommand="aws sts assume-role --role-arn $roleArn "
     roleCommand+="--role-session-name iam-role-injector "
-    roleCommand+="--duration-seconds $AWS_STS_TIMEOUT "
+    roleCommand+="--duration-seconds $TIMEOUT "
     roleCommand+="--serial-number $serialArn "
     roleCommand+="--query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId, Expiration]' "
     [ "$mfatoken" != NONE ] && \
@@ -51,14 +51,24 @@ assume_role(){
         export AWS_SESSION_TOKEN="$arg2"
         export AWS_ACCESS_KEY_ID="$arg3"
         export AWS_STS_EXPIRATION="$arg4"
-        AWS_STS_TIMEOUT=$(date -ujf "%Y-%m-%dT%H:%M:%SZ" "$AWS_STS_EXPIRATION" "+%s") # reassign var to epoch timestamp
-        export AWS_STS_TIMEOUT
+        determine_timeout
         AWS_ACCOUNT_NAME=$(aws iam list-account-aliases --query 'AccountAliases[]' --output text)
         export AWS_ACCOUNT_NAME
-        echo "$AWS_ACCOUNT_NAME:$rolename\nexpiration: $AWS_STS_EXPIRATION UTC"
+        echo -e "$AWS_ACCOUNT_NAME:$rolename\nexpiration: $AWS_STS_EXPIRATION UTC"
     else
         echo
         main -h
+    fi
+}
+
+determine_timeout(){
+    OS_TYPE=$(uname -s)
+    # linux specific
+    if [ "$OS_TYPE" = Linux ]; then
+        export AWS_STS_TIMEOUT=$(date --date="$AWS_STS_EXPIRATION" "+%s")
+    # mac specific
+    elif [ "$OS_TYPE" = Darwin ]; then
+        export AWS_STS_TIMEOUT=$(date -ujf "%Y-%m-%dT%H:%M:%SZ" "$AWS_STS_EXPIRATION" "+%s") # reassign var to epoch timestamp
     fi
 }
 
@@ -78,14 +88,14 @@ header(){
 
 print_aws_info(){
     get_aws_info
-    echo "$AWS_ACCOUNT_NUMBER $AWS_ACCOUNT_NAME/$AWS_USER: $AWS_ACCESS_KEY_ID"
+    echo "$AWS_ACCOUNT_NUMBER $AWS_ACCOUNT_NAME/$AWS_USER $AWS_ACCESS_KEY_ID"
 }
 
 parse_args(){
     if [ $# -eq 0 ]; then
         prompt_args
     else
-        AWS_STS_TIMEOUT=3600
+        TIMEOUT=3600
         mfatoken=NONE
         while [ $# -ne 0 ]; do
             arg_vars "$@"
@@ -145,17 +155,17 @@ rotate_keys(){
 
 timeout_time(){
     if [ "$1" ]; then
-        if [[ "$1" =~ h$\|H$ ]]; then
-            AWS_STS_TIMEOUT="$(( ${1%?} * 60 * 60))"
-        elif [[ "$1" =~ m$\|M$ ]]; then
-            AWS_STS_TIMEOUT="$(( ${1%?} * 60))"
-        elif [[ "$1" =~ s$\|S$ ]]; then
-            AWS_STS_TIMEOUT="${1%?}"
+        if [[ "$1" =~ [hH]$ ]]; then
+            TIMEOUT="$(( ${1%?} * 60 * 60))"
+        elif [[ "$1" =~ [mM]$ ]]; then
+            TIMEOUT="$(( ${1%?} * 60))"
+        elif [[ "$1" =~ [sS]$ ]]; then
+            TIMEOUT="${1%?}"
         elif [[ "$1" =~ [0-9]$ ]]; then
-            AWS_STS_TIMEOUT="$1"
+            TIMEOUT="$1"
         fi
     else
-        AWS_STS_TIMEOUT=3600
+        TIMEOUT=3600
     fi
 }
 
@@ -167,8 +177,8 @@ unset_vars(){
         AWS_SECURITY_TOKEN \
         AWS_SESSION_TOKEN \
         AWS_STS_EXPIRATION \
-        AWS_STS_TIMEOUT \
-        AWS_USER
+        AWS_USER \
+        TIMEOUT
         print_aws_info
 }
 
