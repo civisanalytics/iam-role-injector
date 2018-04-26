@@ -16,6 +16,8 @@ arg_vars(){
         -m|--mfa )
             mfatoken="$2" ;;
     esac
+    [ "$mfatoken" ] || \
+        mfatoken=NONE
 }
 
 assume_role(){
@@ -99,7 +101,6 @@ parse_args(){
         prompt_args
     else
         TIMEOUT=3600
-        mfatoken=NONE
         while [ $# -ne 0 ]; do
             arg_vars "$@"
             shift
@@ -109,16 +110,20 @@ parse_args(){
 
 prompt_args(){
     # Prompt user if no args specified
-    # read -rp "Source Account: " S
     printf "Destination Account: "
     read -r destinationaccount
     printf "Role: "
     read -r rolename
     printf "Timeout (Default: 1hr): "
     read -r timeout
-    printf "Multifactor Authentication?: (default is NONE)"
+    printf "Multifactor Authentication? (default is NONE): "
     read -r mfa
-    parse_args -d "$destinationaccount" -r "$rolename" -t "$timeout" -t "$mfa"
+    if [ -n "$mfa" ]; then
+        mfatoken="$mfa"
+    else
+        mfatoken=NONE
+    fi
+    main -d "$destinationaccount" -r "$rolename" -t "$timeout" -m "$mfa"
 }
 
 print_help(){
@@ -209,4 +214,4 @@ main(){
 main "$@"
 # This runs in a subshell, so it will not exit your shell when you are sourcing,
 # but it still gives you the correct exit code if you read from $?
-(exit $exitCode)
+(exit "$exitCode")

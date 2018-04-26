@@ -54,9 +54,45 @@ e.g. (for 12 hours):
 #### Specify expiration (aws sts now supports from 1 hour, up to 12 hours)
 `source /path/to/sts_assume_role.sh -d [destination_account__number] -r [rolename] -t 4h`
 
-*(works with seconds, minutes, or hours. e.g. `-t 2h` `-t 120m` `-t 7200s` `-t 7200`)*
+*works with seconds, minutes, or hours. e.g. `-t 2h` `-t 120m` `-t 7200s` `-t 7200`*
 
+### Variables exported
+```
+AWS_ACCOUNT_NAME
+AWS_ACCESS_KEY_ID
+AWS_ENV_VARS
+AWS_SECRET_ACCESS_KEY
+AWS_SECURITY_TOKEN
+AWS_SESSION_TOKEN
+AWS_STS_EXPIRATION
+AWS_STS_TIMEOUT
+AWS_USER
+OG_AWS_ACCESS_KEY_ID
+OG_AWS_SECRET_ACCESS_KEY
+```
 
+### Expiration/Timeout use case
+`AWS_STS_EXPIRATION` and `AWS_STS_TIMEOUT` are helpful to create a basic functions to determine how much time until the assume-role has
+expired.
+
+```
+function timeToSTSExpiration(){
+  echo $(( $(( ${AWS_STS_TIMEOUT} - $(date -u +%s) )) / 60 ))
+}
+```
+
+It can even be added to your prompt. e.g.
+```
+function checkSTS() {
+if [[ -n $AWS_STS_EXPIRATION && $AWS_STS_TIMEOUT -ge $(date +%s) ]]; then
+  AWS_STS_MINUTES_REMAINING=$(( $(( AWS_STS_TIMEOUT - $(date -u +%s) )) / 60 ))
+  echo "$AWS_ACCOUNT_NAME|$AWS_STS_MINUTES_REMAINING"
+elif [[ $AWS_STS_TIMEOUT -le $(date +%s) ]]; then
+  unset AWS_STS_EXPIRATION
+fi
+STS_PROMPT_="$STS_COLOR"'$(checkSTS)'
+PROMPT="$STS_PROMPT >"
+```
 
 # Antiquated script
 ```
