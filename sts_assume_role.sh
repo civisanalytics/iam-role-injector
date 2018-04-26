@@ -39,6 +39,7 @@ assume_role(){
         roleCommand+="--token-code $mfatoken"
 
     commandResult=$(eval "$roleCommand")
+    exitCode=$?
     if [[ "$commandResult" && ${#commandResult} -gt 6 ]]; then
         arg1=$(echo "$commandResult" | awk -F\" 'NR==2 {print $2}')
         arg2=$(echo "$commandResult" | awk -F\" 'NR==3 {print $2}')
@@ -57,6 +58,7 @@ assume_role(){
         echo -e "$AWS_ACCOUNT_NAME:$rolename\nexpiration: $AWS_STS_EXPIRATION UTC"
     else
         echo
+        exitCode=1
         main -h
     fi
 }
@@ -80,6 +82,7 @@ get_aws_info(){
     [ "$AWS_ACCESS_KEY_ID" ] || \
         AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id --profile default) \
         AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key --profile default)
+    exitCode=$1
 }
 
 header(){
@@ -204,3 +207,6 @@ main(){
 }
 
 main "$@"
+# This runs in a subshell, so it will not exit your shell when you are sourcing,
+# but it still gives you the correct exit code if you read from $?
+(exit $exitCode)
