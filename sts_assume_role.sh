@@ -16,8 +16,6 @@ arg_vars(){
         -m|--mfa )
             mfatoken="$2" ;;
     esac
-    [ "$mfatoken" ] || \
-        mfatoken=NONE
 }
 
 assume_role(){
@@ -84,7 +82,7 @@ get_aws_info(){
     [ "$AWS_ACCESS_KEY_ID" ] || \
         AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id --profile default) \
         AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key --profile default)
-    exitCode=$1
+    exitCode=1
 }
 
 header(){
@@ -101,6 +99,7 @@ parse_args(){
         prompt_args
     else
         TIMEOUT=3600
+        mfatoken=NONE
         while [ $# -ne 0 ]; do
             arg_vars "$@"
             shift
@@ -110,6 +109,7 @@ parse_args(){
 
 prompt_args(){
     # Prompt user if no args specified
+    header "No values set, please enter at least the destination account number and role name to assume"
     printf "Destination Account: "
     read -r destinationaccount
     printf "Role: "
@@ -118,11 +118,6 @@ prompt_args(){
     read -r timeout
     printf "Multifactor Authentication? (default is NONE): "
     read -r mfa
-    if [ -n "$mfa" ]; then
-        mfatoken="$mfa"
-    else
-        mfatoken=NONE
-    fi
     main -d "$destinationaccount" -r "$rolename" -t "$timeout" -m "$mfa"
 }
 
@@ -214,4 +209,4 @@ main(){
 main "$@"
 # This runs in a subshell, so it will not exit your shell when you are sourcing,
 # but it still gives you the correct exit code if you read from $?
-(exit "$exitCode")
+(exit $exitCode)
