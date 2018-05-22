@@ -8,22 +8,26 @@ arg_vars(){
     # Set aws args
     case "$1" in
         -d|--destination )
-            destinationaccount="$2" ;;
+            DESTINATION_ACCOUNT="$2" ;;
+        -m|--mfa )
+            MFA_TOKEN="$2" ;;
+        -r|--role )
+            ROLE_NAME="$2" ;;
+        -s|--source )
+            AWS_ACCOUNT_NUMBER="$2" ;;
         -t|--timeout )
             timeout_time "$2" ;;
-        -r|--role )
-            rolename="$2" ;;
-        -m|--mfa )
-            mfatoken="$2" ;;
+        -u|--user )
+            AWS_USER="$2" ;;
     esac
 }
 
 assume_role(){
     header "AWS STS assume-role"
     roleArn="arn:aws:iam::"
-    roleArn+="$destinationaccount"
+    roleArn+="$DESTINATION_ACCOUNT"
     roleArn+=":role/"
-    roleArn+="$rolename"
+    roleArn+="$ROLE_NAME"
 
     serialArn="arn:aws:iam::"
     serialArn+="$AWS_ACCOUNT_NUMBER"
@@ -35,8 +39,8 @@ assume_role(){
     roleCommand+="--duration-seconds $TIMEOUT "
     roleCommand+="--serial-number $serialArn "
     roleCommand+="--query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId, Expiration]' "
-    [ "$mfatoken" != NONE ] && \
-        roleCommand+="--token-code $mfatoken"
+    [ "$MFA_TOKEN" != NONE ] && \
+        roleCommand+="--token-code $MFA_TOKEN"
 
     commandResult=$(eval "$roleCommand")
     exitCode=$?
@@ -53,9 +57,8 @@ assume_role(){
         export AWS_ACCESS_KEY_ID="$arg3"
         export AWS_STS_EXPIRATION="$arg4"
         determine_timeout
-        AWS_ACCOUNT_NAME=$(aws iam list-account-aliases --query 'AccountAliases[]' --output text)
-        export AWS_ACCOUNT_NAME
-        echo -e "$AWS_ACCOUNT_NAME:$rolename\nexpiration: $AWS_STS_EXPIRATION UTC"
+        get_aws_account_name
+        echo -e "$AWS_ACCOUNT_NAME:$ROLE_NAME\nexpiration: $AWS_STS_EXPIRATION UTC"
     else
         echo
         exitCode=1
@@ -74,15 +77,38 @@ determine_timeout(){
     fi
 }
 
+exit_code(){
+    (exit $exitCode)
+}
+
+get_aws_account_name(){
+    AWS_ACCOUNT_NAME=$(aws iam list-account-aliases --query 'AccountAliases[]' --output text 2>&1)
+    if grep -q 'error.*ListAccountAliases' <<< "$AWS_ACCOUNT_NAME"; then
+        printf "$AWS_ACCOUNT_NAME\\n"
+        exitCode=255
+        exit_code
+    else
+        export AWS_ACCOUNT_NAME
+    fi
+}
+
 get_aws_info(){
-    AWS_ACCOUNT_NAME=$(aws iam list-account-aliases --query 'AccountAliases[]' --output text)
-    AWS_INFO=$(aws sts get-caller-identity --output text --query '[Account, Arn]')
-    AWS_ACCOUNT_NUMBER=$(awk '{print $1}' <<< "$AWS_INFO")
-    AWS_USER=$(awk -F"/" '{print $2}' <<< "$AWS_INFO")
-    [ "$AWS_ACCESS_KEY_ID" ] || \
-        AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id --profile default) \
-        AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key --profile default)
-    exitCode=1
+    if [ -z "$AWS_ACCOUNT_NUMBER" ] && [ -z "$AWS_USER" ]; then
+        AWS_INFO=$(aws sts get-caller-identity --output text --query '[Account, Arn]' 2>&1)
+        if grep -q 'error.*GetCallerIdentity'<<< "$AWS_INFO"; then
+            printf "$AWS_INFO\\n"
+            exitCode=255
+            exit_code
+        else
+            AWS_ACCOUNT_NUMBER=$(awk '{print $1}' <<< "$AWS_INFO")
+            AWS_USER=$(awk -F"/" '{print $2}' <<< "$AWS_INFO")
+            if [ ! "$AWS_ACCESS_KEY_ID" ]; then
+                AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
+                AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
+            fi
+            get_aws_account_name
+        fi
+    fi
 }
 
 header(){
@@ -90,7 +116,7 @@ header(){
 }
 
 print_aws_info(){
-    get_aws_info
+    get_aws_info && \
     echo "$AWS_ACCOUNT_NUMBER $AWS_ACCOUNT_NAME/$AWS_USER $AWS_ACCESS_KEY_ID"
 }
 
@@ -99,7 +125,7 @@ parse_args(){
         prompt_args
     else
         TIMEOUT=3600
-        mfatoken=NONE
+        MFA_TOKEN=NONE
         while [ $# -ne 0 ]; do
             arg_vars "$@"
             shift
@@ -110,15 +136,19 @@ parse_args(){
 prompt_args(){
     # Prompt user if no args specified
     header "No values set, please enter at least the destination account number and role name to assume"
+    printf "Source Account (Default is NONE): "
+    read -r AWS_ACCOUNT_NUMBER
     printf "Destination Account: "
-    read -r destinationaccount
+    read -r DESTINATION_ACCOUNT
+    printf "IAM User Name (Default is NONE): "
+    read -r AWS_USER
     printf "Role: "
-    read -r rolename
-    printf "Timeout (Default: 1hr): "
-    read -r timeout
+    read -r ROLE_NAME
+    printf "Timeout (Default is 1h): "
+    read -r TIMEOUT
     printf "Multifactor Authentication? (default is NONE): "
-    read -r mfa
-    main -d "$destinationaccount" -r "$rolename" -t "$timeout" -m "$mfa"
+    read -r MFA_TOKEN
+    main -s "$AWS_ACCOUNT_NUMBER" -u "$AWS_USER" -d "$DESTINATION_ACCOUNT" -r "$ROLE_NAME" -t "$TIMEOUT" -m "$MFA_TOKEN"
 }
 
 print_help(){
@@ -128,11 +158,13 @@ print_help(){
     -d|--destination    to which AWS account you will assume-role
     -h|--help           (this) help menu
     -i|--info           output aws Info
-    -m|--mfa            disable multi-factor (2fa/mfa) authentication (unspecified defaults to NONE)
+    -m|--mfa            multi-factor (2fa/mfa) authentication (default is NONE)
     -r|--role           aws role you wish be become
+    -s|--source         source account id (not needed if you can 'aws iam list-account-aliases')
     -t|--timeout        duration in which assume-role will be functional
                         (values in (s)econds,(m)inutes,(h)ours - 60m up to 12h. Default is 3600s)
-    -u|--unset          unset assumed role vars"
+    -u|--user           iam user name (not needed if you can 'aws sts get-caller-identity')
+    -x|--unset          unset assumed role vars"
 }
 
 rotate_keys(){
@@ -192,7 +224,7 @@ main(){
         -i|--info )
             header "Current AWS Info"
             print_aws_info ;;
-        -u|--unset )
+        -x|--unset )
             rotate_keys
             unset_vars ;;
         "" )
@@ -209,4 +241,4 @@ main(){
 main "$@"
 # This runs in a subshell, so it will not exit your shell when you are sourcing,
 # but it still gives you the correct exit code if you read from $?
-(exit $exitCode)
+exit_code
