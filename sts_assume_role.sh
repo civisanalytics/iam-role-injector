@@ -10,7 +10,8 @@ arg_vars(){
         -d|--destination )
             DESTINATION_ACCOUNT="$2" ;;
         -m|--mfa )
-            MFA_TOKEN="$2" ;;
+            get_mfa_token "$2" && \
+                [ -z "$MFA_TOKEN" ] && MFA_TOKEN=NONE ;;
         -r|--role )
             ROLE_NAME="$2" ;;
         -s|--source )
@@ -111,6 +112,15 @@ get_aws_info(){
     fi
 }
 
+get_mfa_token(){
+    if [ -z "$*" ]; then
+        printf "Please enter your multifactor token code (default is NONE): "
+        read -r MFA_TOKEN
+    else
+        MFA_TOKEN="$*"
+    fi
+}
+
 header(){
     echo -e "[${PURPLE}${1}${WHITE}]"
 }
@@ -125,7 +135,6 @@ parse_args(){
         prompt_args
     else
         TIMEOUT=3600
-        MFA_TOKEN=NONE
         while [ $# -ne 0 ]; do
             arg_vars "$@"
             shift
@@ -184,7 +193,6 @@ rotate_keys(){
     else
         unset AWS_SECRET_ACCESS_KEY
         unset AWS_ACCESS_KEY_ID
-        unset AWS_USER
     fi
 }
 
