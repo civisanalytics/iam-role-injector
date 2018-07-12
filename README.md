@@ -27,9 +27,9 @@ command line tools to assume a role.
 
 ## Installation
 
-1. [Install aws cli](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
-2. Configure AWS CLI with required credentials, either as Environment
-   Variables or through 'aws configure'
+1. [Install AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+2. [Configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html) with required credentials, either as Environment
+   Variables or by running 'aws configure'
 3. `wget -N https://raw.githubusercontent.com/civisanalytics/iam-role-injector/master/assume_role.sh -O ~/assume_role.sh`
 
 ## Command Line Usage
