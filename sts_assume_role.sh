@@ -10,8 +10,7 @@ arg_vars(){
         -d|--destination )
             DESTINATION_ACCOUNT="$2" ;;
         -m|--mfa )
-            get_mfa_token "$2" && \
-                [ -z "$MFA_TOKEN" ] && MFA_TOKEN=NONE ;;
+            get_mfa_token "$2" ;;
         -r|--role )
             ROLE_NAME="$2" ;;
         -s|--source )
@@ -38,10 +37,11 @@ assume_role(){
     roleCommand="aws sts assume-role --role-arn $roleArn "
     roleCommand+="--role-session-name iam-role-injector "
     roleCommand+="--duration-seconds $TIMEOUT "
-    roleCommand+="--serial-number $serialArn "
+    if [ -n "$MFA_TOKEN" ] && [ "$MFA_TOKEN" != NONE ]; then
+        roleCommand+="--serial-number $serialArn "
+        roleCommand+="--token-code $MFA_TOKEN "
+    fi
     roleCommand+="--query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId, Expiration]' "
-    [ "$MFA_TOKEN" != NONE ] && \
-        roleCommand+="--token-code $MFA_TOKEN"
 
     commandResult=$(eval "$roleCommand")
     exitCode=$?
@@ -113,7 +113,7 @@ get_aws_info(){
 }
 
 get_mfa_token(){
-    if [ -z "$*" ]; then
+    if [ ! "$MFA_TOKEN" ] || [ "$MFA_TOKEN" != NONE ]; then
         printf "Please enter your multifactor token code (default is NONE): "
         read -r MFA_TOKEN
     else
