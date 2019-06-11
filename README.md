@@ -41,18 +41,18 @@ e.g. (for 12 hours):
 
 ## Command Line Usage
 
-*source /path/to/sts_assume_role.sh -d [destination_account__number] -r [rolename]*
+*source /path/to/assume_role.sh -d [destination_account__number] -r [rolename]*
 
 e.g.
-`source /path/to/sts_assume_role.sh -d 1234567890 -r administrator`
+`source /path/to/assume_role.sh -d 1234567890 -r administrator`
 
 e.g.
-`source /path/to/sts_assume_role.sh --source 9876543210 --user iam-user --destination 1234567890 --role administrator --timeout 6h --mfa 552255`
+`source /path/to/assume_role.sh --source 9876543210 --user iam-user --destination 1234567890 --role administrator --timeout 6h --mfa 552255`
 
 ### Otional features:
 #### Help menu
 ```
-/path/to/sts_assume_role.sh -h
+/path/to/assume_role.sh -h
 [Help Menu Options]
 Specify at least a role (-r) and destination account (-d)
     -d|--destination    to which AWS account you will assume-role
@@ -68,22 +68,22 @@ Specify at least a role (-r) and destination account (-d)
 ```
 
 #### Show current iam user or role info
-`/path/to/sts_assume_role.sh -i`
+`/path/to/assume_role.sh -i`
 #### Revert to iam user from role
-`/path/to/sts_assume_role.sh -u`
+`/path/to/assume_role.sh -u`
 #### Specify expiration (aws sts now supports from 1 hour, up to 12 hours)
-`source /path/to/sts_assume_role.sh -d [destination_account__number] -r [rolename] -t 4h`
+`source /path/to/assume_role.sh -d [destination_account__number] -r [rolename] -t 4h`
 *works with seconds, minutes, or hours. e.g. `-t 2h` `-t 120m` `-t 7200s` `-t 7200`*
 ### Specify nothing, and you will be prompted for necessary information
 ```
 source /path/to/sts_assume_role.sh
-[No values set, please enter at least the destination account number and role name to assume a role]
-Source Account (Default is NONE): 9876543210
-Destination Account: 1234567890
-IAM User Name (Default is NONE): iam-user
-Role: administrator
-Timeout (Default is 1h):
-Multifactor Authentication? (default is NONE):
+[No values set, please enter at least the destination account number and role name to assume]
+Source Account (press enter to skip): 1234567890
+Destination Account: 0987654321
+IAM User Name (press enter to skip): current-user
+Role: new-role
+Timeout (Default is 1h): 12h
+Please enter your multifactor token code (press enter to skip):
 ```
 
 ### Variables exported
@@ -111,7 +111,7 @@ function timeToSTSExpiration(){
 }
 ```
 
-It can even be added to your prompt. e.g.
+It can also be added to your prompt. e.g.
 ```
 function checkSTS() {
 if [[ -n $AWS_STS_EXPIRATION && $AWS_STS_TIMEOUT -ge $(date +%s) ]]; then
@@ -124,7 +124,7 @@ STS_PROMPT_="$STS_COLOR"'$(checkSTS)'
 PROMPT="$STS_PROMPT >"
 ```
 
-# Antiquated script
+# Includes backwards compatability support for antiquated script
 ```
 source ~/assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumber} {rolename}
 ```
@@ -134,7 +134,7 @@ source ~/assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumb
  - `destinationAccountNumber`: AWS Account Number of AWS Account 2
  - `rolename`: the name of the role to assume in AWS Account 2 that has the Trust Relationship to AWS Account 1
 
-Calling the script with 'source' is required for the
+Calling the script with `source` is required for the
 environment variables to persist past the runtime of the script.
 
 The script will also protect your original credentials if you chose to
