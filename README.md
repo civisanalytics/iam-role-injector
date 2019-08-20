@@ -43,7 +43,9 @@ source ~/assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumb
  - `destinationAccountNumber`: AWS Account Number of AWS Account 2
  - `rolename`: the name of the role to assume in AWS Account 2 that has the Trust Relationship to AWS Account 1
 
-Calling the script with 'source' is required for the
+*Advanced users only*: Specify a 5th optional argument for STS session duration in seconds. The default is set to 3600 seconds.
+
+Calling the script with `source` is required for the
 environment variables to persist past the runtime of the script.
 
 The script will also protect your original credentials if you chose to
