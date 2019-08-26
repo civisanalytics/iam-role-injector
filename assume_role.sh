@@ -188,10 +188,10 @@ print_help(){
 rotate_keys(){
     unset AWS_SECURITY_TOKEN
     unset AWS_SESSION_TOKEN
-    if [ "$AWS_ENV_VARS" != True ]; then
-        if [ ! "$AWS_SECRET_ACCESS_KEY" ]; then
+    if [ -z "$AWS_ENV_VARS" ]; then
+        if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
             export AWS_ENV_VARS="True"
-        elif [ ! "$OG_AWS_SECRET_ACCESS_KEY" ]; then
+        elif [ -z "$OG_AWS_SECRET_ACCESS_KEY" ]; then
             export OG_AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
             export OG_AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
         else
