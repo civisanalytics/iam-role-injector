@@ -76,7 +76,7 @@ Specify at least a role (-r) and destination account (-d)
 *works with seconds, minutes, or hours. e.g. `-t 2h` `-t 120m` `-t 7200s` `-t 7200`*
 ### Specify nothing, and you will be prompted for necessary information
 ```
-source /path/to/sts_assume_role.sh
+source /path/to/assume_role.sh
 [No values set, please enter at least the destination account number and role name to assume]
 Source Account (press enter to skip): 1234567890
 Destination Account: 0987654321
