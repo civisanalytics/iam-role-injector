@@ -70,7 +70,7 @@ Specify at least a role (-r) and destination account (-d)
 #### Show current iam user or role info
 `/path/to/assume_role.sh -i`
 #### Revert to iam user from role
-`/path/to/assume_role.sh -u`
+`/path/to/assume_role.sh -x`
 #### Specify expiration (aws sts now supports from 1 hour, up to 12 hours)
 `source /path/to/assume_role.sh -d [destination_account__number] -r [rolename] -t 4h`
 *works with seconds, minutes, or hours. e.g. `-t 2h` `-t 120m` `-t 7200s` `-t 7200`*
