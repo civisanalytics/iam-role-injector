@@ -87,7 +87,7 @@ exit_code(){
 get_aws_account_name(){
     AWS_ACCOUNT_NAME=$(aws iam list-account-aliases --query 'AccountAliases[]' --output text 2>&1)
     if grep -q 'error.*ListAccountAliases' <<< "$AWS_ACCOUNT_NAME"; then
-        exitCode=255
+        exitCode=64
         export AWS_ACCOUNT_NAME="NAME INACCESSIBLE" # placeholder if iam:ListAccountAliases was not granted to IAM User
     else
         export AWS_ACCOUNT_NAME
@@ -99,8 +99,7 @@ get_aws_info(){
         AWS_INFO=$(aws sts get-caller-identity --output text --query '[Account, Arn]' 2>&1)
         if grep -q 'error.*GetCallerIdentity'<<< "$AWS_INFO"; then
             printf "$AWS_INFO\\n"
-            exitCode=255
-            exit_code
+            exitCode=64
         else
             AWS_ACCOUNT_NUMBER=$(awk '{print $1}' <<< "$AWS_INFO")
             AWS_USER=$(awk -F"/" '{print $2}' <<< "$AWS_INFO")
