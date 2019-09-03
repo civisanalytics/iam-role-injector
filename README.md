@@ -32,8 +32,99 @@ command line tools to assume a role.
    Variables or by running 'aws configure'
 3. `wget -N https://raw.githubusercontent.com/civisanalytics/iam-role-injector/master/assume_role.sh -O ~/assume_role.sh`
 
+## Increase AWS IAM Role max-session-duration
+1 hour is used by default (following the AWS assume-role default), if no timeout time is specified.
+To update an AWS IAM role beyond 1 hour using the sts assume-role call, you must initially update the IAM role with a max-session-duration (in seconds).
+e.g. (for 12 hours):
+
+`aws iam update-role --role-name administrator --max-session-duration 43200`
+
 ## Command Line Usage
 
+*source /path/to/sts_assume_role.sh -d [destination_account__number] -r [rolename]*
+
+e.g.
+`source /path/to/sts_assume_role.sh -d 1234567890 -r administrator`
+
+e.g.
+`source /path/to/sts_assume_role.sh --source 9876543210 --user iam-user --destination 1234567890 --role administrator --timeout 6h --mfa 552255`
+
+### Otional features:
+#### Help menu
+```
+/path/to/sts_assume_role.sh -h
+[Help Menu Options]
+Specify at least a role (-r) and destination account (-d)
+    -d|--destination    to which AWS account you will assume-role
+    -h|--help           (this) help menu
+    -i|--info           output aws Info
+    -m|--mfa            multi-factor (2fa/mfa) authentication (default is NONE)
+    -r|--role           aws role you wish be become
+    -s|--source         source account id (not needed if you can 'aws iam list-account-aliases')
+    -t|--timeout        duration in which assume-role will be functional
+                        (values in (s)econds,(m)inutes,(h)ours - 60m up to 12h. Default is 3600s)
+    -u|--user           iam user name (not needed if you can 'aws sts get-caller-identity')
+    -x|--unset          unset assumed role vars
+```
+
+#### Show current iam user or role info
+`/path/to/sts_assume_role.sh -i`
+#### Revert to iam user from role
+`/path/to/sts_assume_role.sh -u`
+#### Specify expiration (aws sts now supports from 1 hour, up to 12 hours)
+`source /path/to/sts_assume_role.sh -d [destination_account__number] -r [rolename] -t 4h`
+*works with seconds, minutes, or hours. e.g. `-t 2h` `-t 120m` `-t 7200s` `-t 7200`*
+### Specify nothing, and you will be prompted for necessary information
+```
+source /path/to/sts_assume_role.sh
+[No values set, please enter at least the destination account number and role name to assume a role]
+Source Account (Default is NONE): 9876543210
+Destination Account: 1234567890
+IAM User Name (Default is NONE): iam-user
+Role: administrator
+Timeout (Default is 1h):
+Multifactor Authentication? (default is NONE):
+```
+
+### Variables exported
+```
+AWS_ACCOUNT_NAME
+AWS_ACCESS_KEY_ID
+AWS_ENV_VARS
+AWS_SECRET_ACCESS_KEY
+AWS_SECURITY_TOKEN
+AWS_SESSION_TOKEN
+AWS_STS_EXPIRATION
+AWS_STS_TIMEOUT
+AWS_USER
+OG_AWS_ACCESS_KEY_ID
+OG_AWS_SECRET_ACCESS_KEY
+```
+
+### Expiration/Timeout use case
+`AWS_STS_EXPIRATION` and `AWS_STS_TIMEOUT` are helpful to create a basic functions to determine how much time until the assume-role has
+expired.
+
+```
+function timeToSTSExpiration(){
+  echo $(( $(( ${AWS_STS_TIMEOUT} - $(date -u +%s) )) / 60 ))
+}
+```
+
+It can even be added to your prompt. e.g.
+```
+function checkSTS() {
+if [[ -n $AWS_STS_EXPIRATION && $AWS_STS_TIMEOUT -ge $(date +%s) ]]; then
+  AWS_STS_MINUTES_REMAINING=$(( $(( AWS_STS_TIMEOUT - $(date -u +%s) )) / 60 ))
+  echo "$AWS_ACCOUNT_NAME|$AWS_STS_MINUTES_REMAINING"
+elif [[ $AWS_STS_TIMEOUT -le $(date +%s) ]]; then
+  unset AWS_STS_EXPIRATION
+fi
+STS_PROMPT_="$STS_COLOR"'$(checkSTS)'
+PROMPT="$STS_PROMPT >"
+```
+
+# Antiquated script
 ```
 source ~/assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumber} {rolename}
 ```
