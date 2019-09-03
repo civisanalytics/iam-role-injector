@@ -87,9 +87,8 @@ exit_code(){
 get_aws_account_name(){
     AWS_ACCOUNT_NAME=$(aws iam list-account-aliases --query 'AccountAliases[]' --output text 2>&1)
     if grep -q 'error.*ListAccountAliases' <<< "$AWS_ACCOUNT_NAME"; then
-        printf "$AWS_ACCOUNT_NAME\\n"
         exitCode=255
-        exit_code
+        export AWS_ACCOUNT_NAME="NAME INACCESSIBLE" # placeholder if iam:ListAccountAliases was not granted to IAM User
     else
         export AWS_ACCOUNT_NAME
     fi
