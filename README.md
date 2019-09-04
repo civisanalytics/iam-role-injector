@@ -30,7 +30,7 @@ command line tools to assume a role.
 1. [Install AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 2. [Configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html) with required credentials, either as Environment
    Variables or by running 'aws configure'
-3. `wget -N https://raw.githubusercontent.com/civisanalytics/iam-role-injector/master/assume_role.sh -O ~/assume_role.sh`
+3. `wget -N https://raw.githubusercontent.com/scottrbaxter/iam-role-injector/master/assume_role.sh -O ~/assume_role.sh`
 
 ## Increase AWS IAM Role max-session-duration
 1 hour is used by default (following the AWS assume-role default), if no timeout time is specified.
@@ -143,7 +143,7 @@ store *them* as environment variables.
 ## Bugs
 
 Please report any bugs to:
-https://github.com/civisanalytics/iam-role-injector/issues
+https://github.com/scottrbaxter/iam-role-injector/issues
 
 ## Contributing
 
