@@ -37,43 +37,21 @@ get_sts () {
   echo "Enter MFA token code:"
   read tokenCode
 
-  case "$scriptArgs" in
-    4)
-      if [ -z "$tokenCode" ]; then
-        read -a commandResult <<< $(aws sts assume-role --output text\
-                      --role-arn $roleArn \
-                      --role-session-name iam-role-injector \
-                      --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]')
-      else
-        read -a commandResult <<< $(aws sts assume-role --output text \
-                      --role-arn $roleArn \
-                      --role-session-name iam-role-injector \
-                      --serial-number $serialArn \
-                      --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
-                      --token-code $tokenCode)
-      fi
-      ;;
-    5)
-      if [ -z "$tokenCode" ]; then
-        read -a commandResult <<< $(aws sts assume-role --output text\
-                      --role-arn $roleArn \
-                      --role-session-name iam-role-injector \
-                      --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
-                      --duration-seconds $durationSeconds)
-      else
-        read -a commandResult <<< $(aws sts assume-role --output text \
-                      --role-arn $roleArn \
-                      --role-session-name iam-role-injector \
-                      --serial-number $serialArn \
-                      --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
-                      --duration-seconds $durationSeconds \
-                      --token-code $tokenCode)
-      fi
-      ;;
-      *)
-        echo "Could not form sts assume-role command! Check arguments."
-        exitCode=1
-  esac
+  if [ -z "$tokenCode" ]; then
+    read -a commandResult <<< $(aws sts assume-role --output text\
+                  --role-arn $roleArn \
+                  --role-session-name iam-role-injector \
+                  --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
+                  --duration-seconds $durationSeconds)
+  else
+    read -a commandResult <<< $(aws sts assume-role --output text \
+                  --role-arn $roleArn \
+                  --role-session-name iam-role-injector \
+                  --serial-number $serialArn \
+                  --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
+                  --duration-seconds $durationSeconds \
+                  --token-code $tokenCode)
+  fi
 
   exitCode=$?
 }
