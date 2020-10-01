@@ -2,12 +2,13 @@
 # requires 4 args and optionally a 5th, needs to be run with source to get exported variables to stick
 # source assume_role.sh <sourceAccountNumber> <username> <destinationAccountNumber> <rolename> [durationSeconds]
 
-
+scriptArgs=$#
 sourceAccountNumber=$1
 username=$2
 destinationAccountNumber=$3
 rolename=$4
 durationSeconds=${5:-3600}
+exitCode=""
 
 roleArn="arn:aws:iam::${destinationAccountNumber}:role/${rolename}"
 serialArn="arn:aws:iam::${sourceAccountNumber}:mfa/${username}"
@@ -35,21 +36,46 @@ get_sts () {
   # allow a blank tokenCode for orgs that don't use an MFA
   echo "Enter MFA token code:"
   read tokenCode
-  if [ -z "$tokenCode" ]; then
-    read -a commandResult <<< $(aws sts assume-role --output text\
-                  --role-arn $roleArn \
-                  --role-session-name iam-role-injector \
-                  --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]')
-  else
-    read -a commandResult <<< $(aws sts assume-role --output text \
-                  --role-arn $roleArn \
-                  --role-session-name iam-role-injector \
-                  --serial-number $serialArn \
-                  --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
-                  --token-code $tokenCode)
-  fi
 
-  global exitCode=$?
+  case "$scriptArgs" in
+    4)
+      if [ -z "$tokenCode" ]; then
+        read -a commandResult <<< $(aws sts assume-role --output text\
+                      --role-arn $roleArn \
+                      --role-session-name iam-role-injector \
+                      --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]')
+      else
+        read -a commandResult <<< $(aws sts assume-role --output text \
+                      --role-arn $roleArn \
+                      --role-session-name iam-role-injector \
+                      --serial-number $serialArn \
+                      --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
+                      --token-code $tokenCode)
+      fi
+      ;;
+    5)
+      if [ -z "$tokenCode" ]; then
+        read -a commandResult <<< $(aws sts assume-role --output text\
+                      --role-arn $roleArn \
+                      --role-session-name iam-role-injector \
+                      --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
+                      --duration-seconds $durationSeconds)
+      else
+        read -a commandResult <<< $(aws sts assume-role --output text \
+                      --role-arn $roleArn \
+                      --role-session-name iam-role-injector \
+                      --serial-number $serialArn \
+                      --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
+                      --duration-seconds $durationSeconds \
+                      --token-code $tokenCode)
+      fi
+      ;;
+      *)
+        echo "Could not form sts assume-role command! Check arguments."
+        exitCode=1
+  esac
+
+  exitCode=$?
 }
 
 set_env_vars () {
@@ -63,23 +89,23 @@ set_env_vars () {
     export AWS_ACCESS_KEY_ID=${commandResult[2]}
   else
     echo "Unable to assume role"
-    global exitCode=1
+    exitCode=1
   fi
 }
 
 main () {
-if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "$rolename" ] && [ -n "$username" ]; then
- clear_env_vars
- get_sts
- set_env_vars
-else
-  echo "Usage: source assume_role.sh <sourceAccountNumber> <username> <destinationAccountNumber> <rolename> [durationSeconds]"
-  exitCode=1
-fi
+  if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "$rolename" ] && [ -n "$username" ]; then
+    clear_env_vars
+    get_sts
+    set_env_vars
+  else
+    echo "Usage: source assume_role.sh <sourceAccountNumber> <username> <destinationAccountNumber> <rolename> [durationSeconds]"
+    exitCode=1
+  fi
 
-# This runs in a subshell, so it will not exit your shell when you are sourcing,
-# but it still gives you the correct exit code if you read from $?
 }
 
 main
-(exit $?)
+# This runs in a subshell, so it will not exit your shell when you are sourcing,
+# but it still gives you the correct exit code if you read from $?
+(exit $exitCode)
