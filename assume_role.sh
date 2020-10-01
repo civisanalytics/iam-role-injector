@@ -2,13 +2,11 @@
 # requires 4 args and optionally a 5th, needs to be run with source to get exported variables to stick
 # source assume_role.sh <sourceAccountNumber> <username> <destinationAccountNumber> <rolename> [durationSeconds]
 
-scriptArgs=$#
 sourceAccountNumber=$1
 username=$2
 destinationAccountNumber=$3
 rolename=$4
 durationSeconds=${5:-3600}
-exitCode=""
 
 roleArn="arn:aws:iam::${destinationAccountNumber}:role/${rolename}"
 serialArn="arn:aws:iam::${sourceAccountNumber}:mfa/${username}"
