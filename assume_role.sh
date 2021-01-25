@@ -7,6 +7,7 @@ username=$2
 destinationAccountNumber=$3
 rolename=$4
 durationSeconds=${5:-3600}
+defaultShell=$(echo $SHELL)
 
 roleArn="arn:aws:iam::${destinationAccountNumber}:role/${rolename}"
 serialArn="arn:aws:iam::${sourceAccountNumber}:mfa/${username}"
@@ -35,14 +36,20 @@ get_sts () {
   echo "Enter MFA token code:"
   read tokenCode
 
+  if [[ "$defaultShell" == *"zsh"* ]]; then
+    export a="-A"
+  else
+    export a="-a"
+  fi
+
   if [ -z "$tokenCode" ]; then
-    read -a commandResult <<< $(aws sts assume-role --output text\
+    read $a commandResult <<< $(aws sts assume-role --output text\
                   --role-arn $roleArn \
                   --role-session-name iam-role-injector \
                   --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
                   --duration-seconds $durationSeconds)
   else
-    read -a commandResult <<< $(aws sts assume-role --output text \
+    read $a commandResult <<< $(aws sts assume-role --output text \
                   --role-arn $roleArn \
                   --role-session-name iam-role-injector \
                   --serial-number $serialArn \
