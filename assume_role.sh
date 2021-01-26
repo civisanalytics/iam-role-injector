@@ -35,7 +35,7 @@ get_sts () {
   # allow a blank tokenCode for orgs that don't use an MFA
   echo "Enter MFA token code:"
   read tokenCode
-
+  # zsh requires -A in order to read in an array
   if [[ "$defaultShell" == *"zsh"* ]]; then
     export a="-A"
   else
@@ -63,13 +63,25 @@ get_sts () {
 
 set_env_vars () {
   if (( ${#commandResult[@]} == 3 )); then
-    echo "You have assumed the $rolename role successfully."
-    export AWS_SECRET_ACCESS_KEY=${commandResult[0]}
-    # Set AWS_SESSION_TOKEN and AWS_SECURITY_TOKEN for backwards compatibility
-    # See: http://boto3.readthedocs.org/en/latest/guide/configuration.html
-    export AWS_SECURITY_TOKEN=${commandResult[1]}
-    export AWS_SESSION_TOKEN=${commandResult[1]}
-    export AWS_ACCESS_KEY_ID=${commandResult[2]}
+    if [[ "$defaultShell" == *"bash"* ]]; then
+      echo "You have assumed the $rolename role successfully."
+      export AWS_SECRET_ACCESS_KEY=${commandResult[0]}
+      # Set AWS_SESSION_TOKEN and AWS_SECURITY_TOKEN for backwards compatibility
+      # See: http://boto3.readthedocs.org/en/latest/guide/configuration.html
+      export AWS_SECURITY_TOKEN=${commandResult[1]}
+      export AWS_SESSION_TOKEN=${commandResult[1]}
+      export AWS_ACCESS_KEY_ID=${commandResult[2]}
+    elif [[ "$defaultShell" == *"zsh"* ]]; then
+      echo "You have assumed the $rolename role successfully."
+      # zsh arrays are numbered from one by default
+      # see: https://stackoverflow.com/questions/36453146/why-does-read-a-fail-in-zsh
+      export AWS_SECRET_ACCESS_KEY=${commandResult[1]}
+      # Set AWS_SESSION_TOKEN and AWS_SECURITY_TOKEN for backwards compatibility
+      # See: http://boto3.readthedocs.org/en/latest/guide/configuration.html
+      export AWS_SECURITY_TOKEN=${commandResult[2]}
+      export AWS_SESSION_TOKEN=${commandResult[2]}
+      export AWS_ACCESS_KEY_ID=${commandResult[3]}
+    fi
   else
     echo "Unable to assume role"
     exitCode=1
