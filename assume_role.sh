@@ -7,7 +7,7 @@ username=$2
 destinationAccountNumber=$3
 rolename=$4
 durationSeconds=${5:-3600}
-defaultShell=$(echo $SHELL)
+defaultShell=$(echo $0)
 
 roleArn="arn:aws:iam::${destinationAccountNumber}:role/${rolename}"
 serialArn="arn:aws:iam::${sourceAccountNumber}:mfa/${username}"
