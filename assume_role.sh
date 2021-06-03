@@ -7,7 +7,8 @@ username=$2
 destinationAccountNumber=$3
 rolename=$4
 durationSeconds=${5:-3600}
-defaultShell=$(echo $SHELL)
+# Get current shell even if it is not the default shell: https://unix.stackexchange.com/a/227138
+defaultShell=$(ps -p $$ | awk '$1 != "PID" {print $(NF)}')
 
 roleArn="arn:aws:iam::${destinationAccountNumber}:role/${rolename}"
 serialArn="arn:aws:iam::${sourceAccountNumber}:mfa/${username}"
@@ -36,24 +37,25 @@ get_sts () {
   echo "Enter MFA token code:"
   read tokenCode
   # zsh requires -A in order to read in an array
+  readFlag="-a"
   if [[ "$defaultShell" == *"zsh"* ]]; then
-    export a="-A"
+    readFlag="-A"
   fi
 
   if [ -z "$tokenCode" ]; then
-    read $a commandResult <<< $(aws sts assume-role --output text\
-                  --role-arn $roleArn \
-                  --role-session-name iam-role-injector \
-                  --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
-                  --duration-seconds $durationSeconds)
+    read $readFlag commandResult <<< $(aws sts assume-role --output text\
+                                           --role-arn $roleArn \
+                                           --role-session-name iam-role-injector \
+                                           --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
+                                           --duration-seconds $durationSeconds)
   else
-    read $a commandResult <<< $(aws sts assume-role --output text \
-                  --role-arn $roleArn \
-                  --role-session-name iam-role-injector \
-                  --serial-number $serialArn \
-                  --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
-                  --duration-seconds $durationSeconds \
-                  --token-code $tokenCode)
+    read $readFlag commandResult <<< $(aws sts assume-role --output text \
+                                           --role-arn $roleArn \
+                                           --role-session-name iam-role-injector \
+                                           --serial-number $serialArn \
+                                           --query 'Credentials.[SecretAccessKey, SessionToken, AccessKeyId]' \
+                                           --duration-seconds $durationSeconds \
+                                           --token-code $tokenCode)
   fi
 
   exitCode=$?
