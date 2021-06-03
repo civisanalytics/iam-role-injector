@@ -7,7 +7,7 @@ username=$2
 destinationAccountNumber=$3
 rolename=$4
 durationSeconds=${5:-3600}
-defaultShell=$(echo $0)
+defaultShell=$(echo $SHELL)
 
 roleArn="arn:aws:iam::${destinationAccountNumber}:role/${rolename}"
 serialArn="arn:aws:iam::${sourceAccountNumber}:mfa/${username}"
@@ -38,8 +38,6 @@ get_sts () {
   # zsh requires -A in order to read in an array
   if [[ "$defaultShell" == *"zsh"* ]]; then
     export a="-A"
-  else
-    export a="-a"
   fi
 
   if [ -z "$tokenCode" ]; then
