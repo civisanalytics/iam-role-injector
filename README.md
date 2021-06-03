@@ -30,7 +30,11 @@ command line tools to assume a role.
 1. [Install AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 2. [Configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html) with required credentials, either as Environment
    Variables or by running 'aws configure'
-3. `wget -N https://raw.githubusercontent.com/civisanalytics/iam-role-injector/master/assume_role.sh -O ~/assume_role.sh`
+3. Clone this repo OR:
+   ```
+   wget -N https://raw.githubusercontent.com/civisanalytics/iam-role-injector/master/assume_role.sh -O ~/assume_role.sh && chmod +x ~/assume_role.sh
+   wget -N https://raw.githubusercontent.com/civisanalytics/iam-role-injector/master/sts_assume_role.sh -O ~/sts_assume_role.sh && chmod +x ~/sts_assume_role.sh
+   ```
 
 ## Increase AWS IAM Role max-session-duration
 1 hour is used by default (following the AWS assume-role default), if no timeout time is specified.
@@ -49,7 +53,7 @@ e.g.
 e.g.
 `source /path/to/sts_assume_role.sh --source 9876543210 --user iam-user --destination 1234567890 --role administrator --timeout 6h --mfa 552255`
 
-### Otional features:
+### Optional features:
 #### Help menu
 ```
 /path/to/sts_assume_role.sh -h
@@ -70,7 +74,7 @@ Specify at least a role (-r) and destination account (-d)
 #### Show current iam user or role info
 `/path/to/sts_assume_role.sh -i`
 #### Revert to iam user from role
-`/path/to/sts_assume_role.sh -u`
+`/path/to/sts_assume_role.sh -x`
 #### Specify expiration (aws sts now supports from 1 hour, up to 12 hours)
 `source /path/to/sts_assume_role.sh -d [destination_account__number] -r [rolename] -t 4h`
 *works with seconds, minutes, or hours. e.g. `-t 2h` `-t 120m` `-t 7200s` `-t 7200`*
@@ -124,7 +128,7 @@ STS_PROMPT_="$STS_COLOR"'$(checkSTS)'
 PROMPT="$STS_PROMPT >"
 ```
 
-# Antiquated script
+# Legacy script
 ```
 source ~/assume_role.sh {sourceAccountNumber} {username} {destinationAccountNumber} {rolename}
 ```

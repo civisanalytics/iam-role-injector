@@ -2,6 +2,8 @@
 # requires 4 args and optionally a 5th, needs to be run with source to get exported variables to stick
 # source assume_role.sh <sourceAccountNumber> <username> <destinationAccountNumber> <rolename> [durationSeconds]
 
+echo "WARNING: This script is deprecated.  Please use sts_assume_role.sh instead!"
+
 sourceAccountNumber=$1
 username=$2
 destinationAccountNumber=$3
