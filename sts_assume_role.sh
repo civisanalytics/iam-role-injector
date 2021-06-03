@@ -57,24 +57,12 @@ assume_role(){
         export AWS_SESSION_TOKEN="$arg2"
         export AWS_ACCESS_KEY_ID="$arg3"
         export AWS_STS_EXPIRATION="$arg4"
-        determine_timeout
         get_aws_account_name
         echo -e "$AWS_ACCOUNT_NAME:$ROLE_NAME\nexpiration: $AWS_STS_EXPIRATION UTC"
     else
         echo
         exitCode=1
         main -h
-    fi
-}
-
-determine_timeout(){
-    OS_TYPE=$(uname -s)
-    # linux specific
-    if [ "$OS_TYPE" = Linux ]; then
-        export AWS_STS_TIMEOUT=$(date --date="$AWS_STS_EXPIRATION" "+%s")
-    # mac specific
-    elif [ "$OS_TYPE" = Darwin ]; then
-        export AWS_STS_TIMEOUT=$(date -ujf "%Y-%m-%dT%H:%M:%SZ" "$AWS_STS_EXPIRATION" "+%s") # reassign var to epoch timestamp
     fi
 }
 
