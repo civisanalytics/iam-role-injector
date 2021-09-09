@@ -57,8 +57,8 @@ assume_role(){
         export AWS_SESSION_TOKEN="$arg2"
         export AWS_ACCESS_KEY_ID="$arg3"
         export AWS_STS_EXPIRATION="$arg4"
-        get_aws_account_name
-        echo -e "$AWS_ACCOUNT_NAME:$ROLE_NAME\nexpiration: $AWS_STS_EXPIRATION UTC"
+        print_aws_info
+        echo "expiration: $AWS_STS_EXPIRATION UTC"
     else
         echo
         exitCode=1
@@ -70,32 +70,18 @@ exit_code(){
     (exit $exitCode)
 }
 
-get_aws_account_name(){
-    AWS_ACCOUNT_NAME=$(aws iam list-account-aliases --query 'AccountAliases[]' --output text 2>&1)
-    if grep -q 'error.*ListAccountAliases' <<< "$AWS_ACCOUNT_NAME"; then
-        printf "$AWS_ACCOUNT_NAME\\n"
+get_aws_info(){
+    AWS_INFO=$(aws sts get-caller-identity --output text --query '[Account, Arn]' 2>&1)
+    if grep -q 'error.*GetCallerIdentity'<<< "$AWS_INFO"; then
+        printf "$AWS_INFO\\n"
         exitCode=255
         exit_code
     else
-        export AWS_ACCOUNT_NAME
-    fi
-}
-
-get_aws_info(){
-    if [ -z "$AWS_ACCOUNT_NUMBER" ] && [ -z "$AWS_USER" ]; then
-        AWS_INFO=$(aws sts get-caller-identity --output text --query '[Account, Arn]' 2>&1)
-        if grep -q 'error.*GetCallerIdentity'<<< "$AWS_INFO"; then
-            printf "$AWS_INFO\\n"
-            exitCode=255
-            exit_code
-        else
-            AWS_ACCOUNT_NUMBER=$(awk '{print $1}' <<< "$AWS_INFO")
-            AWS_USER=$(awk -F"/" '{print $2}' <<< "$AWS_INFO")
-            if [ ! "$AWS_ACCESS_KEY_ID" ]; then
-                AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
-                AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
-            fi
-            get_aws_account_name
+        AWS_ACCOUNT_NUMBER=$(awk '{print $1}' <<< "$AWS_INFO")
+        AWS_USER=$(awk -F"/" '{print $2}' <<< "$AWS_INFO")
+        if [ ! "$AWS_ACCESS_KEY_ID" ]; then
+            AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
+            AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
         fi
     fi
 }
@@ -115,7 +101,7 @@ header(){
 
 print_aws_info(){
     get_aws_info && \
-    echo "$AWS_ACCOUNT_NUMBER $AWS_ACCOUNT_NAME/$AWS_USER $AWS_ACCESS_KEY_ID"
+    echo "$AWS_ACCOUNT_NUMBER:$AWS_USER $AWS_ACCESS_KEY_ID"
 }
 
 parse_args(){
@@ -156,8 +142,8 @@ print_help(){
     -h|--help           (this) help menu
     -i|--info           output aws Info
     -m|--mfa            multi-factor (2fa/mfa) authentication (default is NONE)
-    -r|--role           aws role you wish be become
-    -s|--source         source account id (not needed if you can 'aws iam list-account-aliases')
+    -r|--role           aws role you wish to assume
+    -s|--source         source account id (not needed if you can 'aws sts get-caller-identity')
     -t|--timeout        duration in which assume-role will be functional
                         (values in (s)econds,(m)inutes,(h)ours - 60m up to 12h. Default is 3600s)
     -u|--user           iam user name (not needed if you can 'aws sts get-caller-identity')
@@ -204,7 +190,6 @@ timeout_time(){
 unset_vars(){
     header "Reverting assume-role vars back to IAM user";
     unset AWS_INFO \
-        AWS_ACCOUNT_NAME \
         AWS_ACCOUNT_NUMBER \
         AWS_SECURITY_TOKEN \
         AWS_SESSION_TOKEN \
