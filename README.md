@@ -41,6 +41,8 @@ e.g. (for 12 hours):
 
 ## Command Line Usage
 
+**IMPORTANT NOTE: The command below starts with "source"! If you run the script without sourcing it, the environment variables will go out of scope when the script ends and you'll have a bad time.**
+
 *source /path/to/sts_assume_role.sh -d [destination_account__number] -r [rolename]*
 
 e.g.
