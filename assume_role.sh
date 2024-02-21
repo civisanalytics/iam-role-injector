@@ -6,10 +6,16 @@ sourceAccountNumber=$1
 username=$2
 destinationAccountNumber=$3
 rolename=$4
+code=$5
 
 if [ -n "$destinationAccountNumber" ] && [ -n "$sourceAccountNumber" ] && [ -n "$rolename" ] && [ -n "$username" ]; then
-  echo "Enter MFA token code:"
-  read tokenCode
+  if [ -n "$code" ]; then
+    tokenCode=$code
+  else
+    echo "Enter MFA token code:"
+    read tokenCode
+  fi
+
   unset AWS_SECURITY_TOKEN
   unset AWS_SESSION_TOKEN
   if [ -z "$AWS_ENV_VARS" ]; then
