@@ -50,10 +50,7 @@ assume_role(){
         arg2=$(echo "$commandResult" | awk -F\" 'NR==3 {print $2}')
         arg3=$(echo "$commandResult" | awk -F\" 'NR==4 {print $2}')
         arg4=$(echo "$commandResult" | awk -F\" 'NR==5 {print $2}')
-        # Set AWS_SESSION_TOKEN and AWS_SECURITY_TOKEN for backwards compatibility
-        # See: http://boto3.readthedocs.org/en/latest/guide/configuration.html
         export AWS_SECRET_ACCESS_KEY="$arg1"
-        export AWS_SECURITY_TOKEN="$arg2"
         export AWS_SESSION_TOKEN="$arg2"
         export AWS_ACCESS_KEY_ID="$arg3"
         export AWS_STS_EXPIRATION="$arg4"
